@@ -53,7 +53,7 @@ do_compile() {
   export GO_LDFLAGS="${HOST_LDFLAGS}"
   export FLAGS_FOR_TARGET="${TARGET_CC_ARCH} --sysroot=${STAGING_DIR_TARGET}"
   
-  cd src && sh -x ./make.bash
+  cd src && bash -x ./make.bash
 
   ## The result is `go env` giving this:
   # GOARCH="amd64"
