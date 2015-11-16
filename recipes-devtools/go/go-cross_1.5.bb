@@ -5,6 +5,7 @@ inherit cross
 
 SRC_URI += "\
         file://Fix-ccache-compilation-issue.patch \
+        file://go-cc.patch \
         "
 
 do_compile() {
@@ -46,11 +47,12 @@ do_compile() {
   ## TODO: consider setting GO_EXTLINK_ENABLED
   export CGO_ENABLED="1"
   export CC=${BUILD_CC}
-  export CC_FOR_TARGET="${TARGET_SYS}-gcc"
-  export CXX_FOR_TARGET="${TARGET_SYS}-g++"
+  export CC_FOR_TARGET="${TARGET_PREFIX}gcc ${TARGET_CC_ARCH} --sysroot=${STAGING_DIR_TARGET}"
+  export CXX_FOR_TARGET="${TARGET_PREFIX}gcc ${TARGET_CC_ARCH} --sysroot=${STAGING_DIR_TARGET}"
   export GO_GCFLAGS="${HOST_CFLAGS}"
   export GO_LDFLAGS="${HOST_LDFLAGS}"
-
+  export FLAGS_FOR_TARGET="${TARGET_CC_ARCH} --sysroot=${STAGING_DIR_TARGET}"
+  
   cd src && sh -x ./make.bash
 
   ## The result is `go env` giving this:
