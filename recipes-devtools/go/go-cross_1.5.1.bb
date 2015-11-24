@@ -5,7 +5,6 @@ inherit cross
 
 SRC_URI += "\
         file://Fix-ccache-compilation-issue.patch \
-        file://go-cc.patch \
         "
 
 do_compile() {
@@ -32,6 +31,9 @@ do_compile() {
   if [ "${TARGET_ARCH}" = "x86_64" ]; then
     export GOARCH="amd64"
   fi
+  if [ "${TARGET_ARCH}" = "i586" ]; then
+    export GOARCH="386"
+  fi  
   if [ "${TARGET_ARCH}" = "arm" ]
   then
     if [ `echo ${TUNE_PKGARCH} | cut -c 1-7` = "cortexa" ]
@@ -43,17 +45,19 @@ do_compile() {
   if [ "${TARGET_ARCH}" = "aarch64" ]; then
     export GOARCH="arm64"
   fi
+  export CGO_ENABLED="0"
+  cd src && bash -x ./make.bash
 
   ## TODO: consider setting GO_EXTLINK_ENABLED
+  # Build standard library with CGO
+  export CC="${TARGET_PREFIX}gcc"
+  export CGO_CFLAGS="--sysroot=${STAGING_DIR_TARGET} ${TARGET_CC_ARCH}"
+  export CXX="${TARGET_PREFIX}gxx"
+  export CGO_CXXFLAGS="--sysroot=${STAGING_DIR_TARGET} ${TARGET_CC_ARCH}"
+  export CGO_LDFLAGS="--sysroot=${STAGING_DIR_TARGET} ${TARGET_CC_ARCH}"
   export CGO_ENABLED="1"
-  export CC=${BUILD_CC}
-  export CC_FOR_TARGET="${TARGET_PREFIX}gcc ${TARGET_CC_ARCH} --sysroot=${STAGING_DIR_TARGET}"
-  export CXX_FOR_TARGET="${TARGET_PREFIX}gcc ${TARGET_CC_ARCH} --sysroot=${STAGING_DIR_TARGET}"
-  export GO_GCFLAGS="${HOST_CFLAGS}"
-  export GO_LDFLAGS="${HOST_LDFLAGS}"
-  export FLAGS_FOR_TARGET="${TARGET_CC_ARCH} --sysroot=${STAGING_DIR_TARGET}"
-  
-  cd src && bash -x ./make.bash
+  ${S}/bin/go install std
+
 
   ## The result is `go env` giving this:
   # GOARCH="amd64"
