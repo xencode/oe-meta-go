@@ -3,6 +3,8 @@ require go_${PV}.inc
 
 inherit cross
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/go-${PV}:"
+
 SRC_URI += "\
         file://bsd_svid_source.patch \
         file://ccache.patch \

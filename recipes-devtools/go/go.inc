@@ -11,3 +11,7 @@ SRC_URI_GO_BOOTSTRAP = "${SRC_URI_PREFIX}/${GO_BOOTSTRAP_SOURCE}"
 SRC_URI = "${SRC_URI_PREFIX}/go${PV}.src.tar.gz"
 
 S = "${WORKDIR}/go/"
+
+PROVIDES = "virtual/${TARGET_PREFIX}go-cross"
+PN = "go-cross-${TARGET_ARCH}"
+BPN = "go-cross"

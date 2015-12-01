@@ -3,6 +3,8 @@ require go_${PV}.inc
 
 inherit cross
 
+FILESEXTRAPATHS_prepend := "${THISDIR}/go-${PV}:"
+
 SRC_URI += "\
         file://Fix-ccache-compilation-issue.patch \
         "
@@ -55,6 +57,7 @@ do_compile() {
   export CXX="${TARGET_PREFIX}gxx"
   export CGO_CXXFLAGS="--sysroot=${STAGING_DIR_TARGET} ${TARGET_CC_ARCH}"
   export CGO_LDFLAGS="--sysroot=${STAGING_DIR_TARGET} ${TARGET_CC_ARCH}"
+  export GOROOT="${S}"
   export CGO_ENABLED="1"
   ${S}/bin/go install std
 
@@ -96,5 +99,7 @@ do_install() {
   do cp -a "${WORKDIR}/go/${dir}" "${D}${libdir}/go/"
   done
 }
+
+INHIBIT_PACKAGE_STRIP = "1"
 
 ## TODO: implement do_clean() and ensure we actually do rebuild super cleanly
