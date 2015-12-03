@@ -3,6 +3,8 @@ require go_${PV}.inc
 
 inherit cross
 
+DEPENDS += " go-native"
+
 FILESEXTRAPATHS_prepend := "${THISDIR}/go-${PV}:"
 
 SRC_URI += "\
@@ -10,18 +12,7 @@ SRC_URI += "\
         "
 
 do_compile() {
-  ## install a build of Go 1.4 in the SYSROOT so we don't need it anywhere else
-  ## in the system (as it currently is the default)
-  export GOROOT_BOOTSTRAP_INSTALL="${STAGING_DIR_HOST}/go1.4"
-  export GOROOT_BOOTSTRAP="${GOROOT_BOOTSTRAP_INSTALL}/go"
-
-  mkdir -p ${GOROOT_BOOTSTRAP_INSTALL}
-  cd ${GOROOT_BOOTSTRAP_INSTALL}
-  wget ${SRC_URI_GO_BOOTSTRAP}
-  tar -xzvf ${GO_BOOTSTRAP_SOURCE}
-  cd - && cd ${GOROOT_BOOTSTRAP_INSTALL}/go/src/
-  ./all.bash
-  cd -
+  export GOROOT_BOOTSTRAP="${STAGING_LIBDIR_NATIVE}/go"
 
   ## Setting `$GOBIN` doesn't do any good, looks like it ends up copying binaries there.
   export GOROOT_FINAL="${SYSROOT}${libdir}/go"
