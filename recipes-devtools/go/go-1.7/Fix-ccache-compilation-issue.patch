@@ -1,0 +1,68 @@
+diff -ur a/src/cmd/cgo/gcc.go b/src/cmd/cgo/gcc.go
+--- a/src/cmd/cgo/gcc.go	2016-08-26 16:47:02.424126210 +0100
++++ b/src/cmd/cgo/gcc.go	2016-08-26 16:47:38.253895549 +0100
+@@ -1163,6 +1163,12 @@
+ func (p *Package) gccBaseCmd() []string {
+ 	// Use $CC if set, since that's what the build uses.
+ 	if ret := strings.Fields(os.Getenv("CC")); len(ret) > 0 {
++		if strings.Contains(ret[0], "ccache") {
++			base_cc := ret[0] + " " + ret[1]
++			os.Setenv("CCACHE_CC", ret[1])
++			ret[1] = base_cc
++			return ret[1:]
++        	}
+ 		return ret
+ 	}
+ 	// Try $GCC if set, since that's what we used to use.
+Only in b/src/cmd/cgo: gcc.go.orig
+diff -ur a/src/cmd/go/build.go b/src/cmd/go/build.go
+--- a/src/cmd/go/build.go	2016-08-26 16:47:02.432125716 +0100
++++ b/src/cmd/go/build.go	2016-08-26 16:47:38.253895549 +0100
+@@ -3009,8 +3009,15 @@
+ 	// strings returned are "gcc", "-I", objdir (and cuts them off).
+ 
+ 	compiler := envList(envvar, defcmd)
+-	a := []string{compiler[0], "-I", objdir}
+-	a = append(a, compiler[1:]...)
++
++	a := []string{compiler[0]}
++	if strings.Contains(compiler[0], "ccache") {
++		a = append(a, compiler[1], "-I", objdir)
++		a = append(a, compiler[2:]...)
++	} else {
++		a = append(a, "-I", objdir)
++		a = append(a, compiler[1:]...)
++	}
+ 
+ 	// Definitely want -fPIC but on Windows gcc complains
+ 	// "-fPIC ignored for target (all code is position independent)"
+Only in b/src/cmd/go: build.go.orig
+diff -ur a/src/os/exec/lp_unix.go b/src/os/exec/lp_unix.go
+--- a/src/os/exec/lp_unix.go	2016-08-26 16:47:02.492122006 +0100
++++ b/src/os/exec/lp_unix.go	2016-08-26 16:50:13.364174553 +0100
+@@ -36,8 +36,14 @@
+ 	// (only bypass the path if file begins with / or ./ or ../)
+ 	// but that would not match all the Unix shells.
+ 
+-	if strings.Contains(file, "/") {
+-		err := findExecutable(file)
++	tmp := file
++	if strings.Contains(file, " ") {
++		exec_part := strings.Split(file, " ")[0]
++		tmp = exec_part
++	}
++
++	if strings.Contains(tmp, "/") {
++		err := findExecutable(tmp)
+ 		if err == nil {
+ 			return file, nil
+ 		}
+@@ -49,7 +55,7 @@
+ 			// Unix shell semantics: path element "" means "."
+ 			dir = "."
+ 		}
+-		path := filepath.Join(dir, file)
++		path := filepath.Join(dir, tmp)
+ 		if err := findExecutable(path); err == nil {
+ 			return path, nil
+ 		}
